@@ -6,10 +6,10 @@ This is a POC that will hopefully expand into something more useful. Goal is to 
 POC will be based off echo framework and the machinery framework. It is also a learning exprience in switching from python to Go.
 
 # Features
-# Simple API to some basic tasks. Using the examples (Add and Multiply)
-# Querry on task completion/status
-# Simple Authentication and issuing a JWT.
-# Workers to execute tasks and return results (Add and Multiply)
+* Simple API to some basic tasks. Using the examples (Add and Multiply)
+* Querry on task completion/status
+*  Simple Authentication and issuing a JWT.
+* Workers to execute tasks and return results (Add and Multiply)
 
 
 
