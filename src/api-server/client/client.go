@@ -64,5 +64,5 @@ func postjson() {
 }
 
 func main() {
-	postjson()
+	postform()
 }
