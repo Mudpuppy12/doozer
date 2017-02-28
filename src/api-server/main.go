@@ -9,10 +9,24 @@ import (
 	"github.com/labstack/echo/middleware"
 )
 
-func login(c echo.Context) error {
-	username := c.FormValue("username")
-	password := c.FormValue("password")
+type user struct {
+	Name     string `json:"username" form:"username" query:"usernamename"`
+	Password string `json:"password" form:"password" query:"password"`
+}
 
+func login(c echo.Context) (err error) {
+
+	u := new(user)
+
+	if err = c.Bind(u); err != nil {
+		return
+	}
+
+	username := u.Name
+	password := u.Password
+
+	//username := c.FormValue("username")
+	//password := c.FormValue("password")
 	if username == "mudpuppy" && password == "dirtypaws" {
 		// Create token
 		token := jwt.New(jwt.SigningMethodHS256)
