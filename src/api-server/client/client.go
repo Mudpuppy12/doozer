@@ -21,6 +21,26 @@ type token struct {
 	Token string `json:"token"`
 }
 
+func goRestricted(host string, port string, tk string) {
+	url := fmt.Sprintf("http://%s:%s/restricted", host, port)
+
+	auth := fmt.Sprintf("Bearer %s", tk)
+
+	req, _ := http.NewRequest("GET", url, nil)
+	req.Header.Set("Authorization", auth)
+	client := &http.Client{}
+	resp, err := client.Do(req)
+
+	if err != nil {
+		panic(err)
+	}
+
+	defer resp.Body.Close()
+	body, _ := ioutil.ReadAll(resp.Body)
+	fmt.Println(string(body))
+
+}
+
 func loginJSON(host string, port string, username string, password string) string {
 
 	url := fmt.Sprintf("http://%s:%s/login", host, port)
@@ -70,6 +90,7 @@ func main() {
 		panic(fmt.Errorf("Can't get Auth token. Check username and password in config"))
 	}
 
-	fmt.Println(token)
-
+	goRestricted(host, port, token)
 }
+
+// curl localhost:1323/restricted -H "Authorization: Bearer <token>" "
