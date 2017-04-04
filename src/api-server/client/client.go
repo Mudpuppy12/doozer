@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"net/http"
 
 	"github.com/spf13/viper"
@@ -32,7 +33,7 @@ func goRestricted(host string, port string, tk string) {
 	resp, err := client.Do(req)
 
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 
 	defer resp.Body.Close()
@@ -54,7 +55,7 @@ func loginJSON(host string, port string, username string, password string) strin
 	resp, err := client.Do(req)
 
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 
 	defer resp.Body.Close()
@@ -64,7 +65,7 @@ func loginJSON(host string, port string, username string, password string) strin
 	err = json.Unmarshal(body, &t)
 
 	if err != nil {
-		fmt.Println("whoops:", err)
+		log.Fatal(err)
 	}
 	return t.Token
 }
@@ -76,7 +77,7 @@ func main() {
 	err := viper.ReadInConfig()
 
 	if err != nil { // Handle errors reading the config file
-		panic(fmt.Errorf("Fatal error config file: %s", err))
+		log.Fatal(err)
 	}
 
 	host := viper.GetString("config.host")
@@ -87,7 +88,7 @@ func main() {
 	token := loginJSON(host, port, username, password)
 
 	if token == "" {
-		panic(fmt.Errorf("Can't get Auth token. Check username and password in config"))
+		log.Fatal(fmt.Errorf("Can't get Auth token. Check username and password in config file"))
 	}
 
 	goRestricted(host, port, token)
