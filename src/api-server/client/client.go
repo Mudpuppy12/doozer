@@ -1,68 +1,75 @@
-// curl is a simple cURL replacement.
 package main
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/http"
-	"net/url"
-	"strconv"
+
+	"github.com/spf13/viper"
 )
 
 // Post like a Form data Values
 
-func postform() {
-	apiUrl := "http://localhost:1323"
-	resource := "/login"
-
-	data := url.Values{}
-
-	data.Set("username", "mudpuppy")
-	data.Set("password", "dirtypaws")
-
-	u, _ := url.ParseRequestURI(apiUrl)
-
-	u.Path = resource
-	urlStr := fmt.Sprintf("%v", u)
-
-	client := &http.Client{}
-	r, _ := http.NewRequest("POST", urlStr, bytes.NewBufferString(data.Encode())) // <-- URL-encoded payload
-	//r.Header.Add("Authorization", "auth_token=\"XXXXXXX\"")
-	r.Header.Add("Content-Type", "application/x-www-form-urlencoded")
-	r.Header.Add("Content-Length", strconv.Itoa(len(data.Encode())))
-
-	resp, _ := client.Do(r)
-
-	body, _ := ioutil.ReadAll(resp.Body)
-	fmt.Println("response Body:", string(body))
-	fmt.Println(resp.Status)
+type auth struct {
+	Username string
+	Password string
 }
 
-// Example using Json input
+type token struct {
+	Token string `json:"token"`
+}
 
-func postjson() {
-	url := "http://localhost:1323/login"
-	fmt.Println("URL:>", url)
+func loginJSON(host string, port string, username string, password string) string {
 
-	var jsonStr = []byte(`{"username":"mudpuppy", "password":"dirtypaws"}`)
+	url := fmt.Sprintf("http://%s:%s/login", host, port)
 
-	req, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonStr))
+	cred := auth{username, password}
+	jsonStr, _ := json.Marshal(cred)
+
+	req, _ := http.NewRequest("POST", url, bytes.NewBuffer(jsonStr))
 	req.Header.Set("Content-Type", "application/json")
-
 	client := &http.Client{}
 	resp, err := client.Do(req)
+
 	if err != nil {
 		panic(err)
 	}
+
 	defer resp.Body.Close()
-
-	fmt.Println("response Status:", resp.Status)
-	fmt.Println("response Headers:", resp.Header)
 	body, _ := ioutil.ReadAll(resp.Body)
-	fmt.Println("response Body:", string(body))
-}
 
+	var t = new(token)
+	err = json.Unmarshal(body, &t)
+
+	if err != nil {
+		fmt.Println("whoops:", err)
+	}
+	return t.Token
+}
 func main() {
-	postform()
+
+	viper.SetConfigName("config") // no need to include file extension
+	viper.AddConfigPath("/Users/denn8098/GoProjects/doozer/src/api-server/client/")
+
+	err := viper.ReadInConfig()
+
+	if err != nil { // Handle errors reading the config file
+		panic(fmt.Errorf("Fatal error config file: %s", err))
+	}
+
+	host := viper.GetString("config.host")
+	port := viper.GetString("config.port")
+	username := viper.GetString("config.username")
+	password := viper.GetString("config.password")
+
+	token := loginJSON(host, port, username, password)
+
+	if token == "" {
+		panic(fmt.Errorf("Can't get Auth token. Check username and password in config"))
+	}
+
+	fmt.Println(token)
+
 }
