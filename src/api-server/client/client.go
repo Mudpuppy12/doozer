@@ -11,16 +11,19 @@ import (
 	"github.com/spf13/viper"
 )
 
-// Post like a Form data Values
-
+// Structure for our authentication for JSON
 type auth struct {
 	Username string
 	Password string
 }
 
+//Structure for the token return
 type token struct {
 	Token string `json:"token"`
 }
+
+// This function will hopefully display a welcome message
+// based on the authentication token provided in login
 
 func goRestricted(host string, port string, tk string) {
 	url := fmt.Sprintf("http://%s:%s/restricted", host, port)
@@ -41,6 +44,9 @@ func goRestricted(host string, port string, tk string) {
 	fmt.Println(string(body))
 
 }
+
+// This function will log you in via Json payload and return an auth token
+// if successfull
 
 func loginJSON(host string, port string, username string, password string) string {
 
@@ -87,11 +93,10 @@ func main() {
 
 	token := loginJSON(host, port, username, password)
 
+	// If we didn't get a token back, then error out
 	if token == "" {
 		log.Fatal(fmt.Errorf("Can't get Auth token. Check username and password in config file"))
 	}
 
 	goRestricted(host, port, token)
 }
-
-// curl localhost:1323/restricted -H "Authorization: Bearer <token>" "
