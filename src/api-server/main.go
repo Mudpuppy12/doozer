@@ -110,6 +110,14 @@ func restricted(c echo.Context) error {
 	return c.String(http.StatusOK, "Welcome "+name+"!")
 }
 
+func apiTask(c echo.Context) error {
+
+	tasknames, _ := server.GetBackend().GetState("task_d7e33c78-6888-4e87-8a26-18a83b98fa95")
+	result := fmt.Sprintf("%v", tasknames.Result.Value)
+	return c.String(http.StatusOK, "Results:"+result)
+
+}
+
 func apiAdd(c echo.Context) error {
 	//user := c.Get("user").(*jwt.Token)
 	//claims := user.Claims.(jwt.MapClaims)
@@ -130,6 +138,7 @@ func apiAdd(c echo.Context) error {
 	}
 
 	asyncResult, err := server.SendTask(&task0)
+	fmt.Printf("%v", asyncResult)
 	errors.Fail(err, "Could not send task")
 
 	result, err := asyncResult.GetWithTimeout(5000000000, 1)
@@ -164,6 +173,7 @@ func main() {
 	r.Use(middleware.JWT([]byte("secret")))
 	r.GET("", restricted)
 	r.GET("/add", apiAdd)
+	r.GET("/tasks", apiTask)
 
 	e.Logger.Fatal(e.Start(":1323"))
 }

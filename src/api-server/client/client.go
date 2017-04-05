@@ -65,6 +65,26 @@ func goAdd(host string, port string, tk string) {
 
 }
 
+func listTasks(host string, port string, tk string) {
+	url := fmt.Sprintf("http://%s:%s/restricted/tasks", host, port)
+
+	auth := fmt.Sprintf("Bearer %s", tk)
+
+	req, _ := http.NewRequest("GET", url, nil)
+	req.Header.Set("Authorization", auth)
+	client := &http.Client{}
+	resp, err := client.Do(req)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	defer resp.Body.Close()
+	body, _ := ioutil.ReadAll(resp.Body)
+	fmt.Println(string(body))
+
+}
+
 // This function will log you in via Json payload and return an auth token
 // if successfull
 
@@ -120,4 +140,5 @@ func main() {
 
 	//goRestricted(host, port, token)
 	goAdd(host, port, token)
+	listTasks(host, port, token)
 }
