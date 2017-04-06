@@ -1,3 +1,6 @@
+//// API client - A Work in progress learning to write a client using authentication
+/// JWT and command line config file reading.
+
 package main
 
 import (
@@ -8,8 +11,11 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
+
+const version = "1.0"
 
 // Structure for our authentication for JSON
 type auth struct {
@@ -20,6 +26,71 @@ type auth struct {
 //Structure for the token return
 type token struct {
 	Token string `json:"token"`
+}
+
+// Here we start defining our client commands w/ Cobra
+// mainCmd is what is issued when someone just types client with no arguments
+
+var mainCmd = &cobra.Command{
+	Use:   "client",
+	Short: "Dozer api client",
+	Long:  "Simple client to interact with Dozer API service.",
+	Run: func(cmd *cobra.Command, args []string) {
+		runCmd()
+	},
+}
+
+var versionCmd = &cobra.Command{
+	Use:   "version",
+	Short: "Print the version.",
+	Long:  "The version of the dispatch service.",
+	Run: func(cmd *cobra.Command, args []string) {
+		fmt.Println(version)
+	},
+}
+
+var addCmd = &cobra.Command{
+	Use:   "add",
+	Short: "Add api call.",
+	Long:  "Call the api to task a worker to add 1+1.",
+	Run: func(cmd *cobra.Command, args []string) {
+
+		host := viper.GetString("config.host")
+		port := viper.GetString("config.port")
+		username := viper.GetString("config.username")
+		password := viper.GetString("config.password")
+
+		token := loginJSON(host, port, username, password)
+
+		// If we didn't get a token back, then error out
+		if token == "" {
+			log.Fatal(fmt.Errorf("Can't get Auth token. Check username and password in config file"))
+		}
+
+		goAdd(host, port, token)
+
+	},
+}
+
+var tokenCmd = &cobra.Command{
+	Use:   "token",
+	Short: "Print a JWT token.",
+	Long:  "Print out a JWT token from a successful login",
+	Run: func(cmd *cobra.Command, args []string) {
+
+		host := viper.GetString("config.host")
+		port := viper.GetString("config.port")
+		username := viper.GetString("config.username")
+		password := viper.GetString("config.password")
+
+		token := loginJSON(host, port, username, password)
+
+		if token == "" {
+			log.Fatal(fmt.Errorf("Can't get Auth token. Check username and password in config file"))
+		}
+
+		fmt.Printf("Your JWT Token is :[%s]\n", token)
+	},
 }
 
 // This function will hopefully display a welcome message
@@ -115,30 +186,40 @@ func loginJSON(host string, port string, username string, password string) strin
 	}
 	return t.Token
 }
-func main() {
 
-	viper.SetConfigName("config") // no need to include file extension
-	viper.AddConfigPath("/Users/denn8098/GoProjects/doozer/src/api-server/client/")
-
-	err := viper.ReadInConfig()
-
-	if err != nil { // Handle errors reading the config file
-		log.Fatal(err)
-	}
-
+func runCmd() {
 	host := viper.GetString("config.host")
 	port := viper.GetString("config.port")
 	username := viper.GetString("config.username")
 	password := viper.GetString("config.password")
 
 	token := loginJSON(host, port, username, password)
+	goRestricted(host, port, token)
+}
 
-	// If we didn't get a token back, then error out
-	if token == "" {
-		log.Fatal(fmt.Errorf("Can't get Auth token. Check username and password in config file"))
+func init() {
+
+	viper.SetConfigName("config") // no need to include file extension
+	viper.AddConfigPath("/Users/denn8098/GoProjects/doozer/src/api-server/client/")
+	err := viper.ReadInConfig()
+
+	if err != nil { // Handle errors reading the config file
+		log.Fatal(err)
 	}
 
-	//goRestricted(host, port, token)
-	goAdd(host, port, token)
-	listTasks(host, port, token)
+	// Adding commands into the client
+
+	mainCmd.AddCommand(versionCmd)
+	mainCmd.AddCommand(addCmd)
+	mainCmd.AddCommand(tokenCmd)
+
+	flags := mainCmd.Flags()
+
+	flags.Bool("test", false, "Test something.")
+	viper.BindPFlag("test", flags.Lookup("test"))
+}
+
+func main() {
+	mainCmd.Execute()
+
 }

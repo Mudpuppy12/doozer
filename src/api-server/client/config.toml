@@ -1,0 +1,5 @@
+[config]
+host = "localhost"
+port = 1323
+username = "mudpuppy"
+password = "dirtypaws"
