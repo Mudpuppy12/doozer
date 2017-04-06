@@ -127,16 +127,31 @@ func apiTask(c echo.Context) (err error) {
 	tasknames, err := server.GetBackend().GetState(task)
 
 	if err != nil {
-		return c.String(http.StatusBadRequest, "Not Found")
+		return c.String(http.StatusBadRequest, "Error: Task not found")
 	}
 
-	// This prob needs to find STATUS of task
-
-	if (tasknames.Result) == nil {
-		return c.String(http.StatusBadGateway, "All workers down")
+	if tasknames.State == "PENDING" {
+		return c.String(http.StatusOK, "Status : PENDING")
 	}
-	result := fmt.Sprintf("%v", tasknames.Result.Value)
-	return c.String(http.StatusOK, "Results:"+result)
+
+	if tasknames.State == "RECEIVED" {
+		return c.String(http.StatusOK, "Status : RECEIVED")
+	}
+
+	if tasknames.State == "STARTED" {
+		return c.String(http.StatusOK, "Status : STARTED")
+	}
+
+	if tasknames.State == "FAILURE" {
+		return c.String(http.StatusOK, "Status : FAILURE")
+	}
+
+	if tasknames.State == "SUCCESS" {
+		result := fmt.Sprintf("%v", tasknames.Result.Value)
+		return c.String(http.StatusOK, "Status : SUCCESS\nResult : "+result)
+	}
+
+	return c.String(http.StatusBadRequest, "ERROR: Something broken")
 
 }
 
@@ -145,12 +160,13 @@ func apiAdd(c echo.Context) error {
 	//claims := user.Claims.(jwt.MapClaims)
 	//name := claims["name"].(string)
 
+	tmp := 1
 	task0 = signatures.TaskSignature{
 		Name: "add",
 		Args: []signatures.TaskArg{
 			{
 				Type:  "int64",
-				Value: 1,
+				Value: tmp,
 			},
 			{
 				Type:  "int64",
