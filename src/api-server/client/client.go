@@ -28,6 +28,10 @@ type token struct {
 	Token string `json:"token"`
 }
 
+type uuid struct {
+	UUID string `json:"uuid"`
+}
+
 // Here we start defining our client commands w/ Cobra
 // mainCmd is what is issued when someone just types client with no arguments
 
@@ -93,6 +97,48 @@ var tokenCmd = &cobra.Command{
 	},
 }
 
+var lookupCmd = &cobra.Command{
+	Use:   "lookup",
+	Short: "Lookup a task uuid.",
+	Long:  "Looku a task uuid and return the result",
+	Run: func(cmd *cobra.Command, args []string) {
+		host := viper.GetString("config.host")
+		port := viper.GetString("config.port")
+		username := viper.GetString("config.username")
+		password := viper.GetString("config.password")
+
+		token := loginJSON(host, port, username, password)
+		goLookup(host, port, token)
+
+	},
+}
+
+/////// * API function calls below /////
+
+func goLookup(host string, port string, tk string) {
+	url := fmt.Sprintf("http://%s:%s/restricted/tasks", host, port)
+
+	id := uuid{viper.GetString("uuid")}
+	jsonStr, _ := json.Marshal(id)
+
+	auth := fmt.Sprintf("Bearer %s", tk)
+
+	req, _ := http.NewRequest("POST", url, bytes.NewBuffer(jsonStr))
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", auth)
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	defer resp.Body.Close()
+	body, _ := ioutil.ReadAll(resp.Body)
+	fmt.Println(string(body))
+}
+
 // This function will hopefully display a welcome message
 // based on the authentication token provided in login
 
@@ -118,26 +164,6 @@ func goRestricted(host string, port string, tk string) {
 
 func goAdd(host string, port string, tk string) {
 	url := fmt.Sprintf("http://%s:%s/restricted/add", host, port)
-
-	auth := fmt.Sprintf("Bearer %s", tk)
-
-	req, _ := http.NewRequest("GET", url, nil)
-	req.Header.Set("Authorization", auth)
-	client := &http.Client{}
-	resp, err := client.Do(req)
-
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	defer resp.Body.Close()
-	body, _ := ioutil.ReadAll(resp.Body)
-	fmt.Println(string(body))
-
-}
-
-func listTasks(host string, port string, tk string) {
-	url := fmt.Sprintf("http://%s:%s/restricted/tasks", host, port)
 
 	auth := fmt.Sprintf("Bearer %s", tk)
 
@@ -212,11 +238,12 @@ func init() {
 	mainCmd.AddCommand(versionCmd)
 	mainCmd.AddCommand(addCmd)
 	mainCmd.AddCommand(tokenCmd)
+	mainCmd.AddCommand(lookupCmd)
 
-	flags := mainCmd.Flags()
+	flags := lookupCmd.Flags()
 
-	flags.Bool("test", false, "Test something.")
-	viper.BindPFlag("test", flags.Lookup("test"))
+	flags.String("uuid", "", "uuid of task you want to lookup.")
+	viper.BindPFlag("uuid", flags.Lookup("uuid"))
 }
 
 func main() {

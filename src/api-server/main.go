@@ -22,6 +22,10 @@ type user struct {
 	Password string `json:"password" form:"password" query:"password"`
 }
 
+type uuid struct {
+	UUID string `json:"uuid" form:"uuid" query:"uuid"`
+}
+
 var (
 	broker                                          string
 	resultBackend                                   string
@@ -110,9 +114,27 @@ func restricted(c echo.Context) error {
 	return c.String(http.StatusOK, "Welcome "+name+"!")
 }
 
-func apiTask(c echo.Context) error {
+func apiTask(c echo.Context) (err error) {
 
-	tasknames, _ := server.GetBackend().GetState("task_d7e33c78-6888-4e87-8a26-18a83b98fa95")
+	u := new(uuid)
+
+	if err = c.Bind(u); err != nil {
+		return
+	}
+
+	task := u.UUID
+
+	tasknames, err := server.GetBackend().GetState(task)
+
+	if err != nil {
+		return c.String(http.StatusBadRequest, "Not Found")
+	}
+
+	// This prob needs to find STATUS of task
+
+	if (tasknames.Result) == nil {
+		return c.String(http.StatusBadGateway, "All workers down")
+	}
 	result := fmt.Sprintf("%v", tasknames.Result.Value)
 	return c.String(http.StatusOK, "Results:"+result)
 
@@ -173,7 +195,7 @@ func main() {
 	r.Use(middleware.JWT([]byte("secret")))
 	r.GET("", restricted)
 	r.GET("/add", apiAdd)
-	r.GET("/tasks", apiTask)
+	r.POST("/tasks", apiTask)
 
 	e.Logger.Fatal(e.Start(":1323"))
 }
