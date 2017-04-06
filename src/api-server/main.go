@@ -156,9 +156,6 @@ func apiTask(c echo.Context) (err error) {
 }
 
 func apiAdd(c echo.Context) error {
-	//user := c.Get("user").(*jwt.Token)
-	//claims := user.Claims.(jwt.MapClaims)
-	//name := claims["name"].(string)
 
 	tmp := 1
 	task0 = signatures.TaskSignature{
@@ -176,15 +173,12 @@ func apiAdd(c echo.Context) error {
 	}
 
 	asyncResult, err := server.SendTask(&task0)
-	fmt.Printf("%v", asyncResult)
 	errors.Fail(err, "Could not send task")
 
 	result, err := asyncResult.GetWithTimeout(5000000000, 1)
 
 	if err != nil { // Handle errors reading the config file
 		taskState := asyncResult.GetState()
-		fmt.Printf("Current state of %v task is:\n", taskState.TaskUUID)
-		fmt.Println(taskState.State)
 		return c.String(http.StatusOK, "Defered! "+taskState.TaskUUID+"")
 	}
 
