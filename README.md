@@ -12,3 +12,4 @@ POC will be based off echo framework and the machinery framework. It is also a l
 * Query on task completion/status on task ID
 * Simple Authentication and issuing a JWT.
 * Workers to execute tasks and return results (Add and Multiply)
+* Server and workers use a broker back end for queueing (Part of machinery library)
