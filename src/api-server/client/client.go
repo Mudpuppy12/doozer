@@ -32,6 +32,10 @@ type uuid struct {
 	UUID string `json:"uuid"`
 }
 
+type numbers struct {
+	Numbers string `json:"Numbers" form:"Numbers" query:"Numbers"`
+}
+
 // Here we start defining our client commands w/ Cobra
 // mainCmd is what is issued when someone just types client with no arguments
 
@@ -65,13 +69,14 @@ var addCmd = &cobra.Command{
 		password := viper.GetString("config.password")
 
 		token := loginJSON(host, port, username, password)
+		numberStr := (viper.GetString("i"))
 
 		// If we didn't get a token back, then error out
 		if token == "" {
 			log.Fatal(fmt.Errorf("Can't get Auth token. Check username and password in config file"))
 		}
 
-		goAdd(host, port, token)
+		goAdd(host, port, token, numberStr)
 
 	},
 }
@@ -162,13 +167,18 @@ func goRestricted(host string, port string, tk string) {
 
 }
 
-func goAdd(host string, port string, tk string) {
+func goAdd(host string, port string, tk string, nbrs string) {
 	url := fmt.Sprintf("http://%s:%s/restricted/add", host, port)
 
 	auth := fmt.Sprintf("Bearer %s", tk)
 
-	req, _ := http.NewRequest("GET", url, nil)
+	data := numbers{nbrs}
+
+	jsonStr, _ := json.Marshal(data)
+	req, _ := http.NewRequest("POST", url, bytes.NewBuffer(jsonStr))
+	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Authorization", auth)
+
 	client := &http.Client{}
 	resp, err := client.Do(req)
 
@@ -240,10 +250,15 @@ func init() {
 	mainCmd.AddCommand(tokenCmd)
 	mainCmd.AddCommand(lookupCmd)
 
-	flags := lookupCmd.Flags()
+	lookupFlags := lookupCmd.Flags()
+	addFlags := addCmd.Flags()
 
-	flags.String("uuid", "", "uuid of task you want to lookup.")
-	viper.BindPFlag("uuid", flags.Lookup("uuid"))
+	lookupFlags.String("uuid", "", "uuid of task you want to lookup.")
+	viper.BindPFlag("uuid", lookupFlags.Lookup("uuid"))
+
+	addFlags.String("i", "", "integers to add")
+	viper.BindPFlag("i", addFlags.Lookup("i"))
+
 }
 
 func main() {
