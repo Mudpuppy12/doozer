@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"strconv"
+	"strings"
 	"time"
 
 	jwt "github.com/dgrijalva/jwt-go"
@@ -26,6 +28,10 @@ type uuid struct {
 	UUID string `json:"uuid" form:"uuid" query:"uuid"`
 }
 
+type numbers struct {
+	Numbers string `json:"numbers" form:"numbers" query:"numbers"`
+}
+
 var (
 	broker                                          string
 	resultBackend                                   string
@@ -37,6 +43,15 @@ var (
 	task0, task1, task2, task3, task4, task5, task6 signatures.TaskSignature
 	cnf                                             config.Config
 )
+
+func sAtoi(stslice string) []int {
+	strs := strings.Split(stslice, ",")
+	ary := make([]int, len(strs))
+	for i := range ary {
+		ary[i], _ = strconv.Atoi(strs[i])
+	}
+	return ary
+}
 
 func init() {
 
@@ -155,21 +170,26 @@ func apiTask(c echo.Context) (err error) {
 
 }
 
-func apiAdd(c echo.Context) error {
+func apiAdd(c echo.Context) (err error) {
 
-	tmp := 1
+	u := new(numbers)
+	//var args []signatures.TaskArg
+
+	if err = c.Bind(u); err != nil {
+		return
+	}
+
+	nbrs := sAtoi(u.Numbers)
+
+	args := []signatures.TaskArg{}
+
+	for _, v := range nbrs {
+		args = append(args, signatures.TaskArg{Type: "int64", Value: v})
+	}
+
 	task0 = signatures.TaskSignature{
 		Name: "add",
-		Args: []signatures.TaskArg{
-			{
-				Type:  "int64",
-				Value: tmp,
-			},
-			{
-				Type:  "int64",
-				Value: 1,
-			},
-		},
+		Args: args,
 	}
 
 	asyncResult, err := server.SendTask(&task0)
@@ -182,8 +202,8 @@ func apiAdd(c echo.Context) error {
 		return c.String(http.StatusOK, "Defered! "+taskState.TaskUUID+"")
 	}
 
-	zippy := fmt.Sprintf("1 + 1 = %v", result.Interface())
-	return c.String(http.StatusOK, "Add! "+zippy+"")
+	zippy := fmt.Sprintf("%v", result.Interface())
+	return c.String(http.StatusOK, "Result: "+zippy+"")
 
 }
 
@@ -204,7 +224,7 @@ func main() {
 	r := e.Group("/restricted")
 	r.Use(middleware.JWT([]byte("secret")))
 	r.GET("", restricted)
-	r.GET("/add", apiAdd)
+	r.POST("/add", apiAdd)
 	r.POST("/tasks", apiTask)
 
 	e.Logger.Fatal(e.Start(":1323"))
