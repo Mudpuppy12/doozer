@@ -19,3 +19,31 @@ POC will be based off echo framework and the machinery framework. It is also a l
 
 * Adding is working 100%
 * Multiply is WIP.
+
+
+# Client Help
+
+<pre>
+$ ./client help
+Simple client to interact with Dozer API service.
+
+Usage:
+  client
+  client [command]
+
+Available Commands:
+  add         Add api call.
+  help        Help about any command
+  lookup      Lookup a task uuid.
+  token       Print a JWT token.
+  version     Print the version.
+
+Use "client [command] --help" for more information about a command.
+</pre>
+
+# Client examples
+<pre>
+$ ./client add --i 1,2,3,4,5,6
+Result: 21
+
+</pre>
