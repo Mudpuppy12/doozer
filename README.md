@@ -8,8 +8,14 @@ POC will be based off echo framework and the machinery framework. It is also a l
 
 # Features
 
-* Simple API to execute some basic tasks. Using the examples (Add and Multiply)
-* Query on task completion/status on task ID
+* Simple REST API to execute some basic tasks. Using the examples (Add and Multiply from machinery)
+* A Simple Client that executes the REST Api Calls.
 * Simple Authentication and issuing a JWT.
+* Query on task completion/status on task ID.
 * Workers to execute tasks and return results (Add and Multiply)
 * Server and workers use a broker back end for queueing (Part of machinery library)
+
+# Code Status
+
+* Adding is working 100%
+* Multiply is WIP.
