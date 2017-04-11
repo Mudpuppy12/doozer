@@ -4,7 +4,11 @@ Restful API task execution using echo and machinery in golang
 This is a POC that will hopefully expand into something more useful. The goal is to create a restful api that can trigger defined tasks to execute and given to workers. The execution will return a result or issue a task ID if the executing takes longer than 5 seconds. You can then use the task_id to query
 the status and retrieve the results from the client.
 
-POC will be based off echo framework and the machinery framework. It is also a learning experience in switching from python to Go.
+POC will be based off echo framework and the machinery framework. It is a learning experience for me switching from python to Go.
+
+I am using gb (https://getgb.io/) for a build tool  and atom (https://atom.io/) Go extensions
+for an editor.
+
 
 # Features
 
