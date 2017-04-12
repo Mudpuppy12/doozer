@@ -60,7 +60,7 @@ var versionCmd = &cobra.Command{
 var addCmd = &cobra.Command{
 	Use:   "add",
 	Short: "Add api call.",
-	Long:  "Call the api to task a worker to add 1+1.",
+	Long:  "Call the api to task a worker to add numbers.",
 	Run: func(cmd *cobra.Command, args []string) {
 
 		host := viper.GetString("config.host")
@@ -77,6 +77,30 @@ var addCmd = &cobra.Command{
 		}
 
 		goAdd(host, port, token, numberStr)
+
+	},
+}
+
+var mulCmd = &cobra.Command{
+	Use:   "mul",
+	Short: "Multiply api call.",
+	Long:  "Call the api to task a worker to muliply numbers.",
+	Run: func(cmd *cobra.Command, args []string) {
+
+		host := viper.GetString("config.host")
+		port := viper.GetString("config.port")
+		username := viper.GetString("config.username")
+		password := viper.GetString("config.password")
+
+		token := loginJSON(host, port, username, password)
+		numberStr := (viper.GetString("i"))
+
+		// If we didn't get a token back, then error out
+		if token == "" {
+			log.Fatal(fmt.Errorf("Can't get Auth token. Check username and password in config file"))
+		}
+
+		goMul(host, port, token, numberStr)
 
 	},
 }
@@ -192,6 +216,31 @@ func goAdd(host string, port string, tk string, nbrs string) {
 
 }
 
+func goMul(host string, port string, tk string, nbrs string) {
+	url := fmt.Sprintf("http://%s:%s/restricted/mul", host, port)
+
+	auth := fmt.Sprintf("Bearer %s", tk)
+
+	data := numbers{nbrs}
+
+	jsonStr, _ := json.Marshal(data)
+	req, _ := http.NewRequest("POST", url, bytes.NewBuffer(jsonStr))
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", auth)
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	defer resp.Body.Close()
+	body, _ := ioutil.ReadAll(resp.Body)
+	fmt.Println(string(body))
+
+}
+
 // This function will log you in via Json payload and return an auth token
 // if successfull
 
@@ -237,6 +286,8 @@ func init() {
 
 	viper.SetConfigName("config") // no need to include file extension
 	viper.AddConfigPath("/Users/denn8098/GoProjects/doozer/src/api-server/client/")
+	viper.AddConfigPath(".")
+
 	err := viper.ReadInConfig()
 
 	if err != nil { // Handle errors reading the config file
@@ -247,17 +298,22 @@ func init() {
 
 	mainCmd.AddCommand(versionCmd)
 	mainCmd.AddCommand(addCmd)
+	mainCmd.AddCommand(mulCmd)
 	mainCmd.AddCommand(tokenCmd)
 	mainCmd.AddCommand(lookupCmd)
 
 	lookupFlags := lookupCmd.Flags()
 	addFlags := addCmd.Flags()
+	mulFlags := mulCmd.Flags()
 
 	lookupFlags.String("uuid", "", "uuid of task you want to lookup.")
 	viper.BindPFlag("uuid", lookupFlags.Lookup("uuid"))
 
 	addFlags.String("i", "", "integers to add")
 	viper.BindPFlag("i", addFlags.Lookup("i"))
+
+	mulFlags.String("i", "", "integers to multiply")
+	viper.BindPFlag("i", mulFlags.Lookup("i"))
 
 }
 
