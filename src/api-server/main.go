@@ -33,15 +33,15 @@ type numbers struct {
 }
 
 var (
-	broker                                          string
-	resultBackend                                   string
-	exchange                                        string
-	exchangeType                                    string
-	defaultQueue                                    string
-	bindingKey                                      string
-	server                                          *machinery.Server
-	task0, task1, task2, task3, task4, task5, task6 signatures.TaskSignature
-	cnf                                             config.Config
+	broker        string
+	resultBackend string
+	exchange      string
+	exchangeType  string
+	defaultQueue  string
+	bindingKey    string
+	server        *machinery.Server
+	task0         signatures.TaskSignature
+	cnf           config.Config
 )
 
 func sAtoi(stslice string) []int {
@@ -57,6 +57,7 @@ func init() {
 
 	viper.SetConfigName("config") // no need to include file extension
 	viper.AddConfigPath("/Users/denn8098/GoProjects/doozer/src/api-server")
+	viper.AddConfigPath(".")
 
 	err := viper.ReadInConfig()
 
