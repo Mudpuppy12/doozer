@@ -21,8 +21,7 @@ for an editor.
 
 # Code Status
 
-* Adding is working 100%
-* Multiply is WIP.
+* Finished 100%
 
 
 # Client Help
