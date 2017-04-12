@@ -2,25 +2,21 @@ package main
 
 import (
 	"api-server/tasks"
-	"flag"
+	"log"
 
 	machinery "github.com/RichardKnop/machinery/v1"
 	"github.com/RichardKnop/machinery/v1/config"
 	"github.com/RichardKnop/machinery/v1/errors"
+	"github.com/spf13/viper"
 )
 
-// Define flags
 var (
-	configPath    = flag.String("c", "config.yml", "Path to a configuration file")
-	broker        = flag.String("b", "amqp://guest:guest@localhost:5672/", "Broker URL")
-	resultBackend = flag.String("r", "amqp://guest:guest@localhost:5672/", "Result backend")
-	// resultBackend = flag.String("r", "redis://127.0.0.1:6379", "Result backend")
-	// resultBackend = flag.String("r", "memcache://127.0.0.1:11211", "Result backend")
-	// resultBackend = flag.String("r", "mongodb://127.0.0.1:27017", "Result backend")
-	exchange     = flag.String("e", "machinery_exchange", "Durable, non-auto-deleted AMQP exchange name")
-	exchangeType = flag.String("t", "direct", "Exchange type - direct|fanout|topic|x-custom")
-	defaultQueue = flag.String("q", "machinery_tasks", "Ephemeral AMQP queue name")
-	bindingKey   = flag.String("k", "machinery_task", "AMQP binding key")
+	broker        string
+	resultBackend string
+	exchange      string
+	exchangeType  string
+	defaultQueue  string
+	bindingKey    string
 
 	cnf    config.Config
 	server *machinery.Server
@@ -28,24 +24,30 @@ var (
 )
 
 func init() {
-	// Parse the flags
-	flag.Parse()
+	viper.SetConfigName("config") // no need to include file extension
+	viper.AddConfigPath("/Users/denn8098/GoProjects/doozer/src/api-server")
+	viper.AddConfigPath(".")
 
-	cnf = config.Config{
-		Broker:        *broker,
-		ResultBackend: *resultBackend,
-		Exchange:      *exchange,
-		ExchangeType:  *exchangeType,
-		DefaultQueue:  *defaultQueue,
-		BindingKey:    *bindingKey,
+	err := viper.ReadInConfig()
+
+	if err != nil { // Handle errors reading the config file
+		log.Fatal(err)
 	}
 
-	// Parse the config
-	// NOTE: If a config file is present, it has priority over flags
-	data, err := config.ReadFromFile(*configPath)
-	if err == nil {
-		err = config.ParseYAMLConfig(&data, &cnf)
-		errors.Fail(err, "Could not parse config file")
+	broker = viper.GetString("dozer.broker")
+	resultBackend = viper.GetString("dozer.result_backend")
+	exchange = viper.GetString("dozer.exchange")
+	exchangeType = viper.GetString("dozer.exchange_type")
+	defaultQueue = viper.GetString("dozer.default_queue")
+	bindingKey = viper.GetString("dozer.binding_key")
+
+	cnf = config.Config{
+		Broker:        broker,
+		ResultBackend: resultBackend,
+		Exchange:      exchange,
+		ExchangeType:  exchangeType,
+		DefaultQueue:  defaultQueue,
+		BindingKey:    bindingKey,
 	}
 
 	server, err := machinery.NewServer(&cnf)
