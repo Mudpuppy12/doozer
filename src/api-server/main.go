@@ -203,8 +203,45 @@ func apiAdd(c echo.Context) (err error) {
 		return c.String(http.StatusOK, "Defered! "+taskState.TaskUUID+"")
 	}
 
-	zippy := fmt.Sprintf("%v", result.Interface())
-	return c.String(http.StatusOK, "Result: "+zippy+"")
+	r := fmt.Sprintf("%v", result.Interface())
+	return c.String(http.StatusOK, "Result: "+r+"")
+
+}
+
+func apiMul(c echo.Context) (err error) {
+
+	u := new(numbers)
+	//var args []signatures.TaskArg
+
+	if err = c.Bind(u); err != nil {
+		return
+	}
+
+	nbrs := sAtoi(u.Numbers)
+
+	args := []signatures.TaskArg{}
+
+	for _, v := range nbrs {
+		args = append(args, signatures.TaskArg{Type: "int64", Value: v})
+	}
+
+	task0 = signatures.TaskSignature{
+		Name: "multiply",
+		Args: args,
+	}
+
+	asyncResult, err := server.SendTask(&task0)
+	errors.Fail(err, "Could not send task")
+
+	result, err := asyncResult.GetWithTimeout(5000000000, 1)
+
+	if err != nil { // Handle errors reading the config file
+		taskState := asyncResult.GetState()
+		return c.String(http.StatusOK, "Defered! "+taskState.TaskUUID+"")
+	}
+
+	r := fmt.Sprintf("%v", result.Interface())
+	return c.String(http.StatusOK, "Result: "+r+"")
 
 }
 
@@ -226,6 +263,7 @@ func main() {
 	r.Use(middleware.JWT([]byte("secret")))
 	r.GET("", restricted)
 	r.POST("/add", apiAdd)
+	r.POST("/mul", apiMul)
 	r.POST("/tasks", apiTask)
 
 	e.Logger.Fatal(e.Start(":1323"))
