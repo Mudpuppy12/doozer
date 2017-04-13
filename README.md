@@ -38,6 +38,7 @@ Available Commands:
   add         Add api call.
   help        Help about any command
   lookup      Lookup a task uuid.
+  mul         Multiply api call.
   token       Print a JWT token.
   version     Print the version.
 
